@@ -3,12 +3,13 @@
 package mockule
 
 import (
-	. "github.com/tidepool-org/mongoproxy/log"
-	"github.com/tidepool-org/mongoproxy/messages"
-	"github.com/tidepool-org/mongoproxy/server"
-	"github.com/globalsign/mgo/bson"
 	"math/rand"
 	"strconv"
+
+	"github.com/globalsign/mgo/bson"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/server"
 )
 
 var maxWireVersion = 3
@@ -48,7 +49,7 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			break
 		}
-		Log(INFO, "%#v", opq)
+		Log.Info("%#v" % opq)
 
 		// TODO: actually do something with the query
 
@@ -68,10 +69,10 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			break
 		}
-		Log(INFO, "%#v", opg)
+		log.Info("%#v" % opg)
 		r := messages.GetMoreResponse{}
 		if opg.CursorID == int64(100) {
-			Log(NOTICE, "Retrieved valid getMore\n")
+			log.Info("Retrieved valid getMore")
 		}
 		r.Database = opg.Database
 		r.Collection = opg.Collection
@@ -83,7 +84,7 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			break
 		}
-		Log(INFO, "%#v", opi)
+		log.Info("%#v" % opi)
 
 		// insert documents into the 'database'
 		for doc := range opi.Documents {
@@ -104,7 +105,7 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 			break
 		}
 		r := messages.UpdateResponse{}
-		Log(INFO, "%#v", opu)
+		log.Info("%#v" % opu)
 		r.N = 5
 		r.NModified = 4
 
@@ -114,7 +115,7 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			break
 		}
-		Log(INFO, "%#v", opd)
+		log.Info("%#v" % opd)
 		r := messages.DeleteResponse{}
 		r.N = 1
 
@@ -124,7 +125,7 @@ func (m Mockule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			break
 		}
-		Log(INFO, "%#v", command)
+		log.Info("%#v" % command)
 
 		switch command.CommandName {
 		case "ismaster":

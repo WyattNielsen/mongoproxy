@@ -1,14 +1,13 @@
 package bsonutil
 
 import (
-	. "github.com/tidepool-org/mongoproxy/log"
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/globalsign/mgo/bson"
 	"testing"
+
+	"github.com/globalsign/mgo/bson"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestFindByValueD(t *testing.T) {
-	SetLogLevel(DEBUG)
 	d := bson.D{{"field", "ok"}, {"field2", "ok"}, {"field3", "ok"}, {"field4", "ok"}}
 
 	Convey("Find the first field in a doc", t, func() {
@@ -34,7 +33,6 @@ func TestFindByValueD(t *testing.T) {
 }
 
 func TestFindDeepValue(t *testing.T) {
-	SetLogLevel(DEBUG)
 	r := bson.M{
 		"field": "ok",
 		"multi": bson.M{

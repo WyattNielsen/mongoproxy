@@ -4,14 +4,15 @@
 package mongod
 
 import (
-	"fmt"
-	"time"
+	"crypto/tls"
+	"net"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tidepool-org/mongoproxy/bsonutil"
 	"github.com/tidepool-org/mongoproxy/convert"
-	. "github.com/tidepool-org/mongoproxy/log"
 	"github.com/tidepool-org/mongoproxy/messages"
 	"github.com/tidepool-org/mongoproxy/server"
 )
@@ -22,6 +23,7 @@ import (
 type MongodModule struct {
 	Connection   mgo.DialInfo
 	mongoSession *mgo.Session
+	ReadOnly     bool
 }
 
 func init() {
@@ -36,66 +38,21 @@ func (m *MongodModule) Name() string {
 	return "mongod"
 }
 
-/*
-Configuration structure:
-{
-	addresses: []string,
-	direct: boolean,
-	timeout: integer,
-	auth: {
-		username: string,
-		password: string,
-		database: string
+func (m *MongodModule) Configure(config server.Config) error {
+	dialInfo, err := mgo.ParseURL(config.AsConnectionString())
+	dialInfo.Timeout = config.Timeout
+
+	if err != nil {
+		return errors.Wrap(err, "URL is unparseable")
 	}
-}
-*/
-func (m *MongodModule) Configure(conf bson.M) error {
-	addrs, ok := conf["addresses"].([]string)
-	if !ok {
-		// check if it's a slice of interfaces
-		addrsRaw, ok := conf["addresses"].([]interface{})
-		if !ok {
-			return fmt.Errorf("Invalid addresses: not a slice")
-		}
-		addrs = make([]string, len(addrsRaw))
-		for i := 0; i < len(addrsRaw); i++ {
-			a, ok := addrsRaw[i].(string)
-			if !ok {
-				return fmt.Errorf("Invalid addresses: address is not a string")
-			}
-			addrs[i] = a
+	// override the DialServer is we are using TLS because we don't have the proper CA certs installed.
+	if config.TLS {
+		dialInfo.DialServer = func(serverAddr *mgo.ServerAddr) (net.Conn, error) {
+			return tls.Dial("tcp", serverAddr.String(), &tls.Config{InsecureSkipVerify: true}) // TODO: Secure this connection
 		}
 	}
-
-	timeout := time.Duration(convert.ToInt64(conf["timeout"], -1))
-	if timeout == -1 {
-		timeout = time.Second * 10
-	}
-
-	dialInfo := mgo.DialInfo{
-		Addrs:   addrs,
-		Direct:  convert.ToBool(conf["direct"]),
-		Timeout: timeout,
-	}
-
-	auth := convert.ToBSONMap(conf["auth"])
-	if auth != nil {
-		username, ok := auth["username"].(string)
-		if ok {
-			dialInfo.Username = username
-		}
-		password, ok := auth["password"].(string)
-		if ok {
-			dialInfo.Password = password
-		}
-		database, ok := auth["database"].(string)
-		if ok {
-			dialInfo.Database = database
-		}
-
-	}
-
-	m.Connection = dialInfo
+	m.ReadOnly = config.ReadOnly
+	m.Connection = *dialInfo
 	return nil
 }
 
@@ -107,7 +64,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		var err error
 		m.mongoSession, err = mgo.DialWithInfo(&m.Connection)
 		if err != nil {
-			Log(ERROR, "Error connecting to MongoDB: %#v", err)
+			log.Errorf("Error connecting to MongoDB: %#v", err)
 			next(req, res)
 			return
 		}
@@ -121,7 +78,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.CommandType:
 		command, err := messages.ToCommandRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to command: %#v", err)
+			log.Warnf("Error converting to command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -133,7 +90,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			// log an error if we can
 			qErr, ok := err.(*mgo.QueryError)
-			Log(WARNING, "Error running command %v: %v", command.CommandName, err)
+			log.Warnf("Error running command %v: %v", command.CommandName, err)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			} else {
@@ -159,7 +116,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.FindType:
 		f, err := messages.ToFindRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to a Find command: %#v", err)
+			log.Warnf("Error converting to a Find command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -182,7 +139,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 				if !ok {
 					err = iter.Err()
 					if err != nil {
-						Log(WARNING, "Error on Find Command: %#v", err)
+						log.Warnf("Error on Find Command: %#v", err)
 
 						// log an error if we can
 						qErr, ok := err.(*mgo.QueryError)
@@ -202,7 +159,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			// dump all of them
 			err = iter.All(&results)
 			if err != nil {
-				Log(WARNING, "Error on Find Command: %#v", err)
+				log.Warnf("Error on Find Command: %#v", err)
 
 				// log an error if we can
 				qErr, ok := err.(*mgo.QueryError)
@@ -225,8 +182,14 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.InsertType:
 		insert, err := messages.ToInsertRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Insert command: %#v", err)
+			log.Warnf("Error converting to Insert command: %#v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.InsertResponse{N: -1}
+			res.Write(response)
 			return
 		}
 
@@ -266,8 +229,17 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.UpdateType:
 		u, err := messages.ToUpdateRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Update command: %v", err)
+			log.Warnf("Error converting to Update command: %v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.UpdateResponse{
+				N:         -1,
+				NModified: -1,
+			}
+			res.Write(response)
 			return
 		}
 
@@ -317,8 +289,16 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.DeleteType:
 		d, err := messages.ToDeleteRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Delete command: %v", err)
+			log.Warnf("Error converting to Delete command: %v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.DeleteResponse{
+				N: -1,
+			}
+			res.Write(response)
 			return
 		}
 
@@ -352,18 +332,18 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			return
 		}
 
-		Log(INFO, "Reply: %#v", reply)
+		log.Infof("Reply: %#v", reply)
 
 		res.Write(response)
 
 	case messages.GetMoreType:
 		g, err := messages.ToGetMoreRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to GetMore command: %#v", err)
+			log.Warnf("Error converting to GetMore command: %#v", err)
 			next(req, res)
 			return
 		}
-		Log(DEBUG, "%#v", g)
+		log.Debugf("%#v", g)
 
 		// make an iterable to get more
 		c := session.DB(g.Database).C(g.Collection)
@@ -379,7 +359,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			if !ok {
 				err = iter.Err()
 				if err != nil {
-					Log(WARNING, "Error on GetMore Command: %#v", err)
+					log.Warnf("Error on GetMore Command: %#v", err)
 
 					if err == mgo.ErrCursor {
 						// we return an empty getMore with an errored out
@@ -418,7 +398,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 
 		res.Write(response)
 	default:
-		Log(WARNING, "Unsupported operation: %v", req.Type())
+		log.Warnf("Unsupported operation: %v", req.Type())
 	}
 
 	next(req, res)

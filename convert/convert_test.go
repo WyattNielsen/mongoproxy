@@ -1,13 +1,12 @@
 package convert
 
 import (
-	. "github.com/tidepool-org/mongoproxy/log"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestBitmask(t *testing.T) {
-	SetLogLevel(DEBUG)
 
 	Convey("Read a bitmask", t, func() {
 

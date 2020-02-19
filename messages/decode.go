@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/tidepool-org/mongoproxy/buffer"
-	"github.com/tidepool-org/mongoproxy/convert"
-	"github.com/tidepool-org/mongoproxy/log"
-	"github.com/globalsign/mgo/bson"
 	"io"
 	"strings"
+
+	"github.com/globalsign/mgo/bson"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidepool-org/mongoproxy/buffer"
+	"github.com/tidepool-org/mongoproxy/convert"
 )
 
 func splitCommandOpQuery(q bson.D) (string, bson.M) {
@@ -229,13 +230,13 @@ func processHeader(reader io.Reader) (MsgHeader, error) {
 	}
 	if n == 0 {
 		// EOF?
-		log.Log(log.INFO, "connection closed")
+		log.Info("connection closed")
 		return MsgHeader{}, err
 	}
 	mHeader := MsgHeader{}
 	err = binary.Read(bytes.NewReader(msgHeaderBytes), binary.LittleEndian, &mHeader)
 	if err != nil {
-		log.Log(log.ERROR, "error decoding from reader: %v", err)
+		log.Errorf("error decoding from reader: %v", err)
 		return MsgHeader{}, err
 	}
 

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/tidepool-org/mongoproxy/buffer"
-	. "github.com/tidepool-org/mongoproxy/log"
+
 	"github.com/globalsign/mgo/bson"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidepool-org/mongoproxy/buffer"
 )
 
 func marshalReplyDocs(reply interface{}, docs []bson.D) ([]byte, error) {
@@ -95,7 +96,7 @@ func EncodeBSON(reqHeader MsgHeader, b bson.M) ([]byte, error) {
 // Encodes a response into a byte slice that represents an OP_REPLY wire protocol message.
 func Encode(reqHeader MsgHeader, res ModuleResponse) ([]byte, error) {
 
-	Log(DEBUG, "Response: %#v", res)
+	log.Debugf("Response: %#v", res)
 
 	// handle error
 	hasError := res.CommandError != nil
