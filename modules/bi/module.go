@@ -4,13 +4,13 @@ package bi
 
 import (
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/bsonutil"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"github.com/mongodbinc-interns/mongoproxy/server"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/bsonutil"
+	"github.com/tidepool-org/mongoproxy/convert"
+	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/server"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"time"
 )
 

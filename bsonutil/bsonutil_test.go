@@ -1,9 +1,9 @@
 package bsonutil
 
 import (
-	. "github.com/mongodbinc-interns/mongoproxy/log"
+	. "github.com/tidepool-org/mongoproxy/log"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 	"testing"
 )
 

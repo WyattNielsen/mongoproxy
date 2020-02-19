@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/buffer"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/buffer"
+	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/globalsign/mgo/bson"
 )
 
 func marshalReplyDocs(reply interface{}, docs []bson.D) ([]byte, error) {

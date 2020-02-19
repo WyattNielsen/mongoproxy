@@ -1,17 +1,18 @@
-package main
+package frontend
 
 import (
 	"flag"
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"github.com/mongodbinc-interns/mongoproxy/modules/bi/frontend"
-	"github.com/mongodbinc-interns/mongoproxy/modules/bi/frontend/controllers"
-	_ "github.com/mongodbinc-interns/mongoproxy/server/config"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+	"github.com/tidepool-org/mongoproxy"
+	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/modules/bi/frontend"
+	"github.com/tidepool-org/mongoproxy/modules/bi/frontend/controllers"
+	_ "github.com/tidepool-org/mongoproxy/server/config"
 )
 
 var (
@@ -37,7 +38,7 @@ func parseFlags() {
 func main() {
 
 	parseFlags()
-	SetLogLevel(logLevel)
+	log.SetLogLevel(logLevel)
 
 	// grab config file
 	// Currently, it will take the configuration of the first BI module found in the chain.
@@ -57,11 +58,11 @@ func main() {
 					Collection: collection,
 				}
 			} else {
-				Log(WARNING, "Invalid namespace for configuration location.")
+				log.Log(log.WARNING, "Invalid namespace for configuration location.")
 			}
 
 		} else {
-			Log(WARNING, "Unable to find configuration location.")
+			log.Log(log.WARNING, "Unable to find configuration location.")
 		}
 
 	} else {
@@ -69,12 +70,12 @@ func main() {
 	}
 
 	if err != nil {
-		Log(WARNING, "%v", err)
+		log.Log(log.WARNING, "%v", err)
 	}
 
 	modules, err := convert.ConvertToBSONMapSlice(result["modules"])
 	if err != nil {
-		Log(WARNING, "Invalid module configuration: %v.", err)
+		log.Log(log.WARNING, "Invalid module configuration: %v.", err)
 	}
 
 	var moduleConfig bson.M
@@ -90,11 +91,11 @@ func main() {
 	}
 
 	if moduleConfig == nil {
-		Log(WARNING, "No BI module found in configuration")
+		log.Log(log.WARNING, "No BI module found in configuration")
 	}
 	r, err := frontend.Start(moduleConfig, "modules/bi/frontend", configLocation)
 	if err != nil {
-		Log(ERROR, "Error starting frontend: %v", err)
+		log.Log(log.ERROR, "Error starting frontend: %v", err)
 		return
 	}
 	r.Run(fmt.Sprintf(":%v", port))

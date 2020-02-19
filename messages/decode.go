@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/buffer"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/buffer"
+	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/tidepool-org/mongoproxy/log"
+	"github.com/globalsign/mgo/bson"
 	"io"
 	"strings"
 )
@@ -229,13 +229,13 @@ func processHeader(reader io.Reader) (MsgHeader, error) {
 	}
 	if n == 0 {
 		// EOF?
-		Log(INFO, "connection closed")
+		log.Log(log.INFO, "connection closed")
 		return MsgHeader{}, err
 	}
 	mHeader := MsgHeader{}
 	err = binary.Read(bytes.NewReader(msgHeaderBytes), binary.LittleEndian, &mHeader)
 	if err != nil {
-		Log(ERROR, "error decoding from reader: %v", err)
+		log.Log(log.ERROR, "error decoding from reader: %v", err)
 		return MsgHeader{}, err
 	}
 

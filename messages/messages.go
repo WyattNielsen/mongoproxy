@@ -3,7 +3,7 @@
 package messages
 
 import (
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 )
 
 // constants representing the different opcodes for the wire protocol.

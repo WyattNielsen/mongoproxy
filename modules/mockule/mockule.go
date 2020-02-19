@@ -3,10 +3,10 @@
 package mockule
 
 import (
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"github.com/mongodbinc-interns/mongoproxy/server"
-	"gopkg.in/mgo.v2/bson"
+	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/server"
+	"github.com/globalsign/mgo/bson"
 	"math/rand"
 	"strconv"
 )

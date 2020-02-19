@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"github.com/mongodbinc-interns/mongoproxy/modules/bi"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/modules/bi"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"time"
 )
 

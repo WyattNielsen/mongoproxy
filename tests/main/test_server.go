@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/mongodbinc-interns/mongoproxy"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/server"
-	_ "github.com/mongodbinc-interns/mongoproxy/server/config"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy"
+	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/server"
+	_ "github.com/tidepool-org/mongoproxy/server/config"
+	"github.com/globalsign/mgo/bson"
 )
 
 var (

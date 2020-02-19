@@ -2,10 +2,10 @@ package bi
 
 import (
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/bsonutil"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/bsonutil"
+	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/globalsign/mgo/bson"
 	"strconv"
 	"time"
 )

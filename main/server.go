@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"github.com/mongodbinc-interns/mongoproxy"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"gopkg.in/mgo.v2/bson"
+
+	"github.com/globalsign/mgo/bson"
+	"github.com/tidepool-org/mongoproxy"
+	"github.com/tidepool-org/mongoproxy/log"
 )
 
 var (
@@ -30,7 +31,7 @@ func parseFlags() {
 func main() {
 
 	parseFlags()
-	SetLogLevel(logLevel)
+	log.SetLogLevel(logLevel)
 
 	// grab config file
 	var result bson.M
@@ -42,7 +43,7 @@ func main() {
 	}
 
 	if err != nil {
-		Log(WARNING, "%v", err)
+		log.Log(log.WARNING, "%v", err)
 	}
 
 	mongoproxy.StartWithConfig(port, result)

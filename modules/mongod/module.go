@@ -5,14 +5,15 @@ package mongod
 
 import (
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/bsonutil"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"github.com/mongodbinc-interns/mongoproxy/server"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+	"github.com/tidepool-org/mongoproxy/bsonutil"
+	"github.com/tidepool-org/mongoproxy/convert"
+	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/server"
 )
 
 // A MongodModule takes the request, sends it to a mongod instance, and then
@@ -173,8 +174,6 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		var iter = query.Iter()
 		var results []bson.D
 
-		cursorID := int64(0)
-
 		if f.Limit > 0 {
 			// only store the amount specified by the limit
 			for i := 0; i < int(f.Limit); i++ {
@@ -196,9 +195,6 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 					}
 					// we ran out of documents, but didn't have an error
 					break
-				}
-				if cursorID == 0 {
-					cursorID = iter.CursorID()
 				}
 				results = append(results, result)
 			}
@@ -222,7 +218,6 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			Database:   f.Database,
 			Collection: f.Collection,
 			Documents:  results,
-			CursorID:   cursorID,
 		}
 
 		res.Write(response)
@@ -374,10 +369,9 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		c := session.DB(g.Database).C(g.Collection)
 		batch := make([]bson.Raw, 0)
 		iter := c.NewIter(session, batch, g.CursorID, nil)
-		iter.SetBatch(int(g.BatchSize))
+		//iter.SetBatch(int(g.BatchSize))
 
 		var results []bson.D
-		cursorID := int64(0)
 
 		for i := 0; i < int(g.BatchSize); i++ {
 			var result bson.D
@@ -391,7 +385,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 						// we return an empty getMore with an errored out
 						// cursor
 						response := messages.GetMoreResponse{
-							CursorID:      cursorID,
+							CursorID:      g.CursorID,
 							Database:      g.Database,
 							Collection:    g.Collection,
 							InvalidCursor: true,
@@ -412,14 +406,11 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 				}
 				break
 			}
-			if cursorID == 0 {
-				cursorID = iter.CursorID()
-			}
 			results = append(results, result)
 		}
 
 		response := messages.GetMoreResponse{
-			CursorID:   cursorID,
+			CursorID:   g.CursorID,
 			Database:   g.Database,
 			Collection: g.Collection,
 			Documents:  results,

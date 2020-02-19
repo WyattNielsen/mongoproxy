@@ -1,8 +1,8 @@
 package bi
 
 import (
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/globalsign/mgo/bson"
 )
 
 // helper function to upsert a metadata document into the metric collection. Metric

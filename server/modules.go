@@ -3,8 +3,8 @@
 package server
 
 import (
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/globalsign/mgo/bson"
 )
 
 type Module interface {
