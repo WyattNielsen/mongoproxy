@@ -27,7 +27,6 @@ type MongodModule struct {
 }
 
 func init() {
-	server.Publish(&MongodModule{})
 }
 
 func (m *MongodModule) New() server.Module {
