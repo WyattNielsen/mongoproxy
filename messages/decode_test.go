@@ -309,7 +309,7 @@ func TestDecodeOpQuery(t *testing.T) {
 					Output: make([]byte, 0)}
 				m.Reset()
 
-				log.Error("%#v" % m)
+				log.Errorf("%#v", m)
 
 				request, _, err := Decode(&m)
 				So(err, ShouldNotBeNil)
@@ -392,7 +392,7 @@ func TestDecodeOpQuery(t *testing.T) {
 			mockInsert := bson.D{{"insert", "foo"},
 				{"documents", docs}}
 
-			log.Debug("%#v\n" % mockInsert)
+			log.Debugf("%#v\n", mockInsert)
 
 			input := createMockQuery(int32(0), int32(0), "db.$cmd", int32(0), int32(0), mockInsert)
 			m := mock.MockIO{
