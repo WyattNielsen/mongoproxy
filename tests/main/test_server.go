@@ -1,40 +1,17 @@
 package main
 
 import (
-	"flag"
 	"github.com/tidepool-org/mongoproxy"
-	. "github.com/tidepool-org/mongoproxy/log"
+	"github.com/tidepool-org/mongoproxy/modules/mongod"
 	"github.com/tidepool-org/mongoproxy/server"
-	_ "github.com/tidepool-org/mongoproxy/server/config"
-	"github.com/globalsign/mgo/bson"
 )
-
-var (
-	port     int
-	logLevel int
-)
-
-func parseFlags() {
-	flag.IntVar(&port, "port", 8124, "port to listen on")
-	flag.IntVar(&logLevel, "logLevel", DEBUG, "verbosity for logging")
-
-	flag.Parse()
-}
 
 func main() {
-
-	parseFlags()
-	SetLogLevel(logLevel)
-
-	module := server.Registry["mongod"].New()
-
-	connection := bson.M{}
-	connection["addresses"] = []string{"localhost:27017"}
-
-	// initialize the pipeline
+	var c server.Config
+	c.Hosts = "localhost:27017"
+	module := mongod.MongodModule{}
+	module.Configure(c)
 	chain := server.CreateChain()
-	module.Configure(connection)
-	chain.AddModule(module)
-
-	mongoproxy.Start(port, chain)
+	chain.AddModule(&module)
+	mongoproxy.Start(8124, chain)
 }
