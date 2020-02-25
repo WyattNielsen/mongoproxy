@@ -1,5 +1,5 @@
 # Development
-FROM golang:1.13.5-alpine AS development
+FROM golang:1.13.8-alpine AS development
 WORKDIR /go/src/github.com/tidepool-org/mongoproxy
 RUN adduser -D tidepool && \
     chown -R tidepool /go/src/github.com/tidepool-org/mongoproxy
