@@ -1,0 +1,16 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.13.5
+
+env:
+  - GO111MODULE=on
+
+go_import_path: github.com/tidepool-org/mongoproxy
+
+script:
+  - go build -o mongoproxy mongoproxy.go
+  - go test ./...
+  - ./artifact.sh
