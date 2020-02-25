@@ -1,4 +1,4 @@
-package mongoproxy
+package main
 
 import (
 	"github.com/tidepool-org/mongoproxy/modules/mongod"
@@ -8,10 +8,10 @@ import (
 
 func main() {
 	var c server.Config
-	c.Hosts = "localhost:27017"
+	c.FromEnv()
 	module := mongod.MongodModule{}
 	module.Configure(c)
 	chain := server.CreateChain()
 	chain.AddModule(&module)
-	proxy.Start(8124, chain)
+	proxy.Start(c.Port, chain)
 }

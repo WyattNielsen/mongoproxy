@@ -4,6 +4,7 @@ WORKDIR /go/src/github.com/tidepool-org/mongoproxy
 RUN adduser -D tidepool && \
     chown -R tidepool /go/src/github.com/tidepool-org/mongoproxy
 USER tidepool
+ENV GO111MODULE=on
 COPY --chown=tidepool . .
 RUN go build -o mongoproxy mongoproxy.go
 CMD ["./mongoproxy"]
@@ -16,6 +17,5 @@ RUN apk --no-cache update && \
     apk add --no-cache ca-certificates && \
     adduser -D tidepool
 USER tidepool
-ENV GO111MODULE=on
 COPY --from=development --chown=tidepool /go/src/github.com/tidepool-org/mongoproxy/mongoproxy .
 CMD ["./mongoproxy"]
