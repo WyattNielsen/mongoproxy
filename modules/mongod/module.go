@@ -5,10 +5,10 @@ package mongod
 
 import (
 	"crypto/tls"
-	"fmt"
+	// "fmt"
 	"net"
-	"path"
-	"runtime"
+	// "path"
+	// "runtime"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
