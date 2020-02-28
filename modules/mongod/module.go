@@ -59,12 +59,12 @@ func (m *MongodModule) Configure(config server.Config) error {
 	m.Logger = log.New()
 	m.Logger.SetReportCaller(true)
 	/*
-	m.Logger.Formatter = &log.TextFormatter{
-		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			filename := path.Base(f.File)
-			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
-		},
-	}
+		m.Logger.Formatter = &log.TextFormatter{
+			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+				filename := path.Base(f.File)
+				return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
+			},
+		}
 	*/
 	return nil
 }
@@ -114,6 +114,9 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			}
 			res.Write(response)
 			return
+		case "ping":
+		case "buildInfo":
+		case "isMaster":
 		default:
 			m.Logger.Infof("processing %v", b)
 		}
@@ -429,6 +432,11 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		}
 
 		res.Write(response)
+
+	case messages.MsgType:
+
+	case messages.KillCursorsType:
+
 	default:
 		m.Logger.Warnf("Unsupported operation: %v", req.Type())
 	}
