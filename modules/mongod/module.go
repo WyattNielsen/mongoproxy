@@ -98,15 +98,18 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 
 		reply := bson.M{}
 		err = session.DB(command.Database).Run(b, reply)
-		if command.CommandName == "createIndexes" {
+		switch command.CommandName {
+		case "createIndexes", "saslStart", "saslContinue":
 			m.Logger.Infof("Skipping command %v", command.CommandName)
-
+			reply["ok"] = 1
+			reply["code"] = 0
 			response := messages.CommandResponse{
 				Reply: reply,
 			}
 			res.Write(response)
 			return
 		}
+		
 		if err != nil {
 			// log an error if we can
 			qErr, ok := err.(*mgo.QueryError)
