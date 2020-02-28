@@ -24,6 +24,7 @@ type MongodModule struct {
 	Connection   mgo.DialInfo
 	mongoSession *mgo.Session
 	ReadOnly     bool
+	Logger       *log.Logger
 }
 
 func init() {
@@ -52,6 +53,14 @@ func (m *MongodModule) Configure(config server.Config) error {
 	}
 	m.ReadOnly = config.ReadOnly
 	m.Connection = *dialInfo
+	m.Logger = log.New()
+	m.Logger.SetReportCaller(true)
+	m.Logger.Formatter = &logrus.TextFormatter{
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			filename := path.Base(f.File)
+			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
+		},
+	}
 	return nil
 }
 
@@ -77,7 +86,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.CommandType:
 		command, err := messages.ToCommandRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to command: %#v", err)
+			m.Logger.Warnf("Error converting to command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -89,7 +98,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		if err != nil {
 			// log an error if we can
 			qErr, ok := err.(*mgo.QueryError)
-			log.Warnf("Error running command %v: %v", command.CommandName, err)
+			m.Logger.Warnf("Error running command %v: %v", command.CommandName, err)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			} else {
@@ -115,7 +124,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.FindType:
 		f, err := messages.ToFindRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to a Find command: %#v", err)
+			m.Logger.Warnf("Error converting to a Find command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -138,7 +147,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 				if !ok {
 					err = iter.Err()
 					if err != nil {
-						log.Warnf("Error on Find Command: %#v", err)
+						m.Logger.Warnf("Error on Find Command: %#v", err)
 
 						// log an error if we can
 						qErr, ok := err.(*mgo.QueryError)
@@ -158,7 +167,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			// dump all of them
 			err = iter.All(&results)
 			if err != nil {
-				log.Warnf("Error on Find Command: %#v", err)
+				m.Logger.Warnf("Error on Find Command: %#v", err)
 
 				// log an error if we can
 				qErr, ok := err.(*mgo.QueryError)
@@ -181,7 +190,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.InsertType:
 		insert, err := messages.ToInsertRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to Insert command: %#v", err)
+			m.Logger.Warnf("Error converting to Insert command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -228,7 +237,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.UpdateType:
 		u, err := messages.ToUpdateRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to Update command: %v", err)
+			m.Logger.Warnf("Error converting to Update command: %v", err)
 			next(req, res)
 			return
 		}
@@ -288,7 +297,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.DeleteType:
 		d, err := messages.ToDeleteRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to Delete command: %v", err)
+			m.Logger.Warnf("Error converting to Delete command: %v", err)
 			next(req, res)
 			return
 		}
@@ -331,18 +340,18 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			return
 		}
 
-		log.Infof("Reply: %#v", reply)
+		m.Logger.Infof("Reply: %#v", reply)
 
 		res.Write(response)
 
 	case messages.GetMoreType:
 		g, err := messages.ToGetMoreRequest(req)
 		if err != nil {
-			log.Warnf("Error converting to GetMore command: %#v", err)
+			m.Logger.Warnf("Error converting to GetMore command: %#v", err)
 			next(req, res)
 			return
 		}
-		log.Debugf("%#v", g)
+		m.Logger.Debugf("%#v", g)
 
 		// make an iterable to get more
 		c := session.DB(g.Database).C(g.Collection)
@@ -358,7 +367,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			if !ok {
 				err = iter.Err()
 				if err != nil {
-					log.Warnf("Error on GetMore Command: %#v", err)
+					m.Logger.Warnf("Error on GetMore Command: %#v", err)
 
 					if err == mgo.ErrCursor {
 						// we return an empty getMore with an errored out
@@ -397,7 +406,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 
 		res.Write(response)
 	default:
-		log.Warnf("Unsupported operation: %v", req.Type())
+		m.Logger.Warnf("Unsupported operation: %v", req.Type())
 	}
 
 	next(req, res)
