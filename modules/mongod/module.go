@@ -99,7 +99,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		reply := bson.M{}
 		err = session.DB(command.Database).Run(b, reply)
 		switch command.CommandName {
-		case "createIndexes", "saslStart", "saslContinue":
+		case "createIndexes":
 			m.Logger.Infof("Skipping command %v", command.CommandName)
 			reply["ok"] = 1
 			reply["code"] = 0
