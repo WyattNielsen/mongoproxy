@@ -108,6 +108,8 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			}
 			res.Write(response)
 			return
+		default:
+			m.Logger.Infof("processing %v", b )
 		}
 		
 		if err != nil {
