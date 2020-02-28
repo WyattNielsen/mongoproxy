@@ -24,28 +24,28 @@ type Config struct {
 
 // FromEnv populates Config from the environment
 func (c *Config) FromEnv() {
-	c.Scheme = os.Getenv("SCHEME")
-	c.Hosts = os.Getenv("ADDRESSES")
-	c.Username = os.Getenv("USERNAME")
-	c.Password = os.Getenv("PASSWORD")
-	c.Database = os.Getenv("DATABASE")
-	c.OptParams = os.Getenv("OPT_PARAMS")
-	c.TLS = os.Getenv("TLS") == "true"
-	timeoutStr := os.Getenv("TIMEOUT")
+	c.Scheme = os.Getenv("Scheme")
+	c.Hosts = os.Getenv("Addresses")
+	c.Username = os.Getenv("Username")
+	c.Password = os.Getenv("Password")
+	c.Database = os.Getenv("Database")
+	c.OptParams = os.Getenv("OptParams")
+	c.TLS = os.Getenv("Tls") == "true"
+	timeoutStr := os.Getenv("Timeout")
 	timeout, err := strconv.Atoi(timeoutStr)
 	if (timeoutStr == "") || (err != nil) {
 		c.Timeout = time.Duration(20 * time.Second)
 	} else {
 		c.Timeout = time.Duration(timeout) * time.Second
 	}
-	portStr := os.Getenv("PORT")
+	portStr := os.Getenv("Port")
 	port, err := strconv.Atoi(portStr)
 	if (portStr == "") || (err != nil) {
 		c.Port = 27017
 	} else {
 		c.Port = port
 	}
-	c.ReadOnly = os.Getenv("READONLY") == "true"
+	c.ReadOnly = os.Getenv("Readonly") == "true"
 }
 
 // AsConnectionString constructs a MongoDB connection string from a Config
