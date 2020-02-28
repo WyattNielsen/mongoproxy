@@ -58,12 +58,14 @@ func (m *MongodModule) Configure(config server.Config) error {
 	m.Connection = *dialInfo
 	m.Logger = log.New()
 	m.Logger.SetReportCaller(true)
+	/*
 	m.Logger.Formatter = &log.TextFormatter{
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			filename := path.Base(f.File)
 			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
 		},
 	}
+	*/
 	return nil
 }
 
