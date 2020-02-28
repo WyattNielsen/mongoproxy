@@ -97,8 +97,12 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		b := command.ToBSON()
 
 		reply := bson.M{}
-		err = session.DB(command.Database).Run(b, reply)
 		switch command.CommandName {
+		case "isMaster":
+			b = bson.D{
+				{"isMaster", 1},
+			}
+
 		case "createIndexes":
 			m.Logger.Infof("Skipping command %v", command.CommandName)
 			reply["ok"] = 1
@@ -109,9 +113,10 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			res.Write(response)
 			return
 		default:
-			m.Logger.Infof("processing %v", b )
+			m.Logger.Infof("processing %v", b)
 		}
-		
+		err = session.DB(command.Database).Run(b, reply)
+
 		if err != nil {
 			// log an error if we can
 			qErr, ok := err.(*mgo.QueryError)
