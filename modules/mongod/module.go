@@ -98,7 +98,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 
 		reply := bson.M{}
 		switch command.CommandName {
-		case "isMaster":
+		case "ismaster":
 			b = bson.D{
 				{"isMaster", 1},
 			}
