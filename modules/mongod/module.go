@@ -4,15 +4,20 @@
 package mongod
 
 import (
-	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/bsonutil"
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"github.com/mongodbinc-interns/mongoproxy/server"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-	"time"
+	"crypto/tls"
+	// "fmt"
+	"net"
+	// "path"
+	// "runtime"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidepool-org/mongoproxy/bsonutil"
+	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/tidepool-org/mongoproxy/server"
 )
 
 // A MongodModule takes the request, sends it to a mongod instance, and then
@@ -21,10 +26,11 @@ import (
 type MongodModule struct {
 	Connection   mgo.DialInfo
 	mongoSession *mgo.Session
+	ReadOnly     bool
+	Logger       *log.Logger
 }
 
 func init() {
-	server.Publish(&MongodModule{})
 }
 
 func (m *MongodModule) New() server.Module {
@@ -35,66 +41,31 @@ func (m *MongodModule) Name() string {
 	return "mongod"
 }
 
-/*
-Configuration structure:
-{
-	addresses: []string,
-	direct: boolean,
-	timeout: integer,
-	auth: {
-		username: string,
-		password: string,
-		database: string
+func (m *MongodModule) Configure(config server.Config) error {
+	dialInfo, err := mgo.ParseURL(config.AsConnectionString())
+	dialInfo.Timeout = config.Timeout
+
+	if err != nil {
+		return errors.Wrap(err, "URL is unparseable")
 	}
-}
-*/
-func (m *MongodModule) Configure(conf bson.M) error {
-	addrs, ok := conf["addresses"].([]string)
-	if !ok {
-		// check if it's a slice of interfaces
-		addrsRaw, ok := conf["addresses"].([]interface{})
-		if !ok {
-			return fmt.Errorf("Invalid addresses: not a slice")
-		}
-		addrs = make([]string, len(addrsRaw))
-		for i := 0; i < len(addrsRaw); i++ {
-			a, ok := addrsRaw[i].(string)
-			if !ok {
-				return fmt.Errorf("Invalid addresses: address is not a string")
-			}
-			addrs[i] = a
+	// override the DialServer is we are using TLS because we don't have the proper CA certs installed.
+	if config.TLS {
+		dialInfo.DialServer = func(serverAddr *mgo.ServerAddr) (net.Conn, error) {
+			return tls.Dial("tcp", serverAddr.String(), &tls.Config{InsecureSkipVerify: true}) // TODO: Secure this connection
 		}
 	}
-
-	timeout := time.Duration(convert.ToInt64(conf["timeout"], -1))
-	if timeout == -1 {
-		timeout = time.Second * 10
-	}
-
-	dialInfo := mgo.DialInfo{
-		Addrs:   addrs,
-		Direct:  convert.ToBool(conf["direct"]),
-		Timeout: timeout,
-	}
-
-	auth := convert.ToBSONMap(conf["auth"])
-	if auth != nil {
-		username, ok := auth["username"].(string)
-		if ok {
-			dialInfo.Username = username
+	m.ReadOnly = config.ReadOnly
+	m.Connection = *dialInfo
+	m.Logger = log.New()
+	m.Logger.SetReportCaller(true)
+	/*
+		m.Logger.Formatter = &log.TextFormatter{
+			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+				filename := path.Base(f.File)
+				return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
+			},
 		}
-		password, ok := auth["password"].(string)
-		if ok {
-			dialInfo.Password = password
-		}
-		database, ok := auth["database"].(string)
-		if ok {
-			dialInfo.Database = database
-		}
-
-	}
-
-	m.Connection = dialInfo
+	*/
 	return nil
 }
 
@@ -106,7 +77,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		var err error
 		m.mongoSession, err = mgo.DialWithInfo(&m.Connection)
 		if err != nil {
-			Log(ERROR, "Error connecting to MongoDB: %#v", err)
+			log.Errorf("Error connecting to MongoDB: %#v", err)
 			next(req, res)
 			return
 		}
@@ -120,7 +91,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.CommandType:
 		command, err := messages.ToCommandRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to command: %#v", err)
+			m.Logger.Warnf("Error converting to command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -128,11 +99,33 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		b := command.ToBSON()
 
 		reply := bson.M{}
+		switch command.CommandName {
+		case "ismaster":
+			b = bson.D{
+				{"isMaster", 1},
+			}
+
+		case "createIndexes":
+			m.Logger.Infof("Skipping command %v", command.CommandName)
+			reply["ok"] = 1
+			reply["code"] = 0
+			response := messages.CommandResponse{
+				Reply: reply,
+			}
+			res.Write(response)
+			return
+		case "ping":
+		case "buildInfo":
+		case "isMaster":
+		default:
+			m.Logger.Infof("processing %v", b)
+		}
 		err = session.DB(command.Database).Run(b, reply)
+
 		if err != nil {
 			// log an error if we can
 			qErr, ok := err.(*mgo.QueryError)
-			Log(WARNING, "Error running command %v: %v", command.CommandName, err)
+			m.Logger.Warnf("Error running command %v: %v", command.CommandName, err)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			} else {
@@ -158,7 +151,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.FindType:
 		f, err := messages.ToFindRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to a Find command: %#v", err)
+			m.Logger.Warnf("Error converting to a Find command: %#v", err)
 			next(req, res)
 			return
 		}
@@ -173,8 +166,6 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		var iter = query.Iter()
 		var results []bson.D
 
-		cursorID := int64(0)
-
 		if f.Limit > 0 {
 			// only store the amount specified by the limit
 			for i := 0; i < int(f.Limit); i++ {
@@ -183,7 +174,7 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 				if !ok {
 					err = iter.Err()
 					if err != nil {
-						Log(WARNING, "Error on Find Command: %#v", err)
+						m.Logger.Warnf("Error on Find Command: %#v", err)
 
 						// log an error if we can
 						qErr, ok := err.(*mgo.QueryError)
@@ -197,16 +188,13 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 					// we ran out of documents, but didn't have an error
 					break
 				}
-				if cursorID == 0 {
-					cursorID = iter.CursorID()
-				}
 				results = append(results, result)
 			}
 		} else {
 			// dump all of them
 			err = iter.All(&results)
 			if err != nil {
-				Log(WARNING, "Error on Find Command: %#v", err)
+				m.Logger.Warnf("Error on Find Command: %#v", err)
 
 				// log an error if we can
 				qErr, ok := err.(*mgo.QueryError)
@@ -222,7 +210,6 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			Database:   f.Database,
 			Collection: f.Collection,
 			Documents:  results,
-			CursorID:   cursorID,
 		}
 
 		res.Write(response)
@@ -230,8 +217,14 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.InsertType:
 		insert, err := messages.ToInsertRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Insert command: %#v", err)
+			m.Logger.Warnf("Error converting to Insert command: %#v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.InsertResponse{N: -1}
+			res.Write(response)
 			return
 		}
 
@@ -271,8 +264,17 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.UpdateType:
 		u, err := messages.ToUpdateRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Update command: %v", err)
+			m.Logger.Warnf("Error converting to Update command: %v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.UpdateResponse{
+				N:         -1,
+				NModified: -1,
+			}
+			res.Write(response)
 			return
 		}
 
@@ -322,8 +324,16 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	case messages.DeleteType:
 		d, err := messages.ToDeleteRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to Delete command: %v", err)
+			m.Logger.Warnf("Error converting to Delete command: %v", err)
 			next(req, res)
+			return
+		}
+
+		if m.ReadOnly {
+			response := messages.DeleteResponse{
+				N: -1,
+			}
+			res.Write(response)
 			return
 		}
 
@@ -357,27 +367,26 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			return
 		}
 
-		Log(INFO, "Reply: %#v", reply)
+		m.Logger.Infof("Reply: %#v", reply)
 
 		res.Write(response)
 
 	case messages.GetMoreType:
 		g, err := messages.ToGetMoreRequest(req)
 		if err != nil {
-			Log(WARNING, "Error converting to GetMore command: %#v", err)
+			m.Logger.Warnf("Error converting to GetMore command: %#v", err)
 			next(req, res)
 			return
 		}
-		Log(DEBUG, "%#v", g)
+		m.Logger.Debugf("%#v", g)
 
 		// make an iterable to get more
 		c := session.DB(g.Database).C(g.Collection)
 		batch := make([]bson.Raw, 0)
 		iter := c.NewIter(session, batch, g.CursorID, nil)
-		iter.SetBatch(int(g.BatchSize))
+		//iter.SetBatch(int(g.BatchSize))
 
 		var results []bson.D
-		cursorID := int64(0)
 
 		for i := 0; i < int(g.BatchSize); i++ {
 			var result bson.D
@@ -385,13 +394,13 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			if !ok {
 				err = iter.Err()
 				if err != nil {
-					Log(WARNING, "Error on GetMore Command: %#v", err)
+					m.Logger.Warnf("Error on GetMore Command: %#v", err)
 
 					if err == mgo.ErrCursor {
 						// we return an empty getMore with an errored out
 						// cursor
 						response := messages.GetMoreResponse{
-							CursorID:      cursorID,
+							CursorID:      g.CursorID,
 							Database:      g.Database,
 							Collection:    g.Collection,
 							InvalidCursor: true,
@@ -412,22 +421,24 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 				}
 				break
 			}
-			if cursorID == 0 {
-				cursorID = iter.CursorID()
-			}
 			results = append(results, result)
 		}
 
 		response := messages.GetMoreResponse{
-			CursorID:   cursorID,
+			CursorID:   g.CursorID,
 			Database:   g.Database,
 			Collection: g.Collection,
 			Documents:  results,
 		}
 
 		res.Write(response)
+
+	case messages.MsgType:
+
+	case messages.KillCursorsType:
+
 	default:
-		Log(WARNING, "Unsupported operation: %v", req.Type())
+		m.Logger.Warnf("Unsupported operation: %v", req.Type())
 	}
 
 	next(req, res)

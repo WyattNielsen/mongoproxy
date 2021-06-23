@@ -3,7 +3,7 @@
 package messages
 
 import (
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 )
 
 // constants representing the different opcodes for the wire protocol.
@@ -13,6 +13,8 @@ const (
 	OP_QUERY          = 2004
 	OP_GET_MORE       = 2005
 	OP_DELETE         = 2006
+	OP_KILL_CURSORS   = 2007
+	OP_MSG            = 2013
 )
 
 // constants representing the types of request structs supported by proxy core.
@@ -23,6 +25,8 @@ const (
 	UpdateType         = "update"
 	DeleteType         = "delete"
 	GetMoreType        = "getMore"
+	KillCursorsType    = "killCursors"
+	MsgType            = "msg"
 )
 
 // a struct to represent a wire protocol message header.
@@ -226,4 +230,27 @@ type GetMore struct {
 
 func (g GetMore) Type() string {
 	return GetMoreType
+}
+
+type KillCursors struct {
+	CursorID   []int64
+}
+
+func (k KillCursors) Type() string {
+	return KillCursorsType
+}
+
+type Section struct {
+	Kind       int32
+	Content    []bson.D
+	Identifier string
+}
+
+type Msg struct {
+	Flag    int32
+	Sections []Section
+}
+
+func (m Msg) Type() string {
+	return MsgType
 }

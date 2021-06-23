@@ -3,8 +3,7 @@
 package server
 
 import (
-	"github.com/mongodbinc-interns/mongoproxy/messages"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/messages"
 )
 
 type Module interface {
@@ -14,7 +13,7 @@ type Module interface {
 
 	// Configure configures this module with the given configuration object. Returns
 	// an error if the configuration is invalid for the module.
-	Configure(bson.M) error
+	Configure(config Config) error
 
 	// Process is the function executed when a message is called in the pipeline.
 	// It takes in a Requester from an upstream module (or proxy core), a

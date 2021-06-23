@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/buffer"
-	. "github.com/mongodbinc-interns/mongoproxy/log"
-	"github.com/mongodbinc-interns/mongoproxy/mock"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/tidepool-org/mongoproxy/buffer"
+
 	"testing"
+
+	"github.com/globalsign/mgo/bson"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/tidepool-org/mongoproxy/mock"
 )
 
 var mockQuery = bson.D{{"hello", 1}}
@@ -242,7 +246,6 @@ func TestCreateFind(t *testing.T) {
 }
 
 func TestDecodeOpQuery(t *testing.T) {
-	SetLogLevel(DEBUG)
 	Convey("Decode a wire protocol OP_QUERY message", t, func() {
 		Convey("that is a valid find command", func() {
 			// create the mock connection
@@ -306,7 +309,7 @@ func TestDecodeOpQuery(t *testing.T) {
 					Output: make([]byte, 0)}
 				m.Reset()
 
-				Log(ERROR, "%#v", m)
+				log.Errorf("%#v", m)
 
 				request, _, err := Decode(&m)
 				So(err, ShouldNotBeNil)
@@ -389,7 +392,7 @@ func TestDecodeOpQuery(t *testing.T) {
 			mockInsert := bson.D{{"insert", "foo"},
 				{"documents", docs}}
 
-			Log(DEBUG, "%#v\n", mockInsert)
+			log.Debugf("%#v\n", mockInsert)
 
 			input := createMockQuery(int32(0), int32(0), "db.$cmd", int32(0), int32(0), mockInsert)
 			m := mock.MockIO{

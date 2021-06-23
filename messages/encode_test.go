@@ -3,9 +3,9 @@ package messages
 import (
 	"bytes"
 	"fmt"
-	"github.com/mongodbinc-interns/mongoproxy/buffer"
+	"github.com/tidepool-org/mongoproxy/buffer"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 	"reflect"
 	"testing"
 )

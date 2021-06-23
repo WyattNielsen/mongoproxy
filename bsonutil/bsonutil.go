@@ -2,8 +2,8 @@
 package bsonutil
 
 import (
-	"github.com/mongodbinc-interns/mongoproxy/convert"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/globalsign/mgo/bson"
 	"strings"
 )
 
