@@ -8,7 +8,6 @@ import (
 
 	"github.com/WyattNielsen/mongoproxy/bsonutil"
 	"github.com/WyattNielsen/mongoproxy/convert"
-	. "github.com/WyattNielsen/mongoproxy/log"
 	"github.com/WyattNielsen/mongoproxy/messages"
 	"github.com/WyattNielsen/mongoproxy/server"
 	"github.com/globalsign/mgo"
