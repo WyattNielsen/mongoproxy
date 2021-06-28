@@ -3,9 +3,10 @@ package messages
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/WyattNielsen/mongoproxy/buffer"
 	"github.com/WyattNielsen/mongoproxy/convert"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // A ResponseWriter is the interface that is used to convert module responses

@@ -11,7 +11,7 @@ import (
 	"github.com/WyattNielsen/mongoproxy/modules/bi"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // biModule is an instance of a BI Module used as reference for the frontend.

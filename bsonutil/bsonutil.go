@@ -2,16 +2,17 @@
 package bsonutil
 
 import (
-	"github.com/WyattNielsen/mongoproxy/convert"
-	"github.com/globalsign/mgo/bson"
 	"strings"
+
+	"github.com/WyattNielsen/mongoproxy/convert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // FindValueByKey returns the value of keyName in document. If keyName is not found
 // in the top-level of the document, a nil document is returned.
 func FindValueByKey(keyName string, document bson.D) interface{} {
 	for _, key := range document {
-		if key.Name == keyName {
+		if key.Key == keyName {
 			return key.Value
 		}
 	}

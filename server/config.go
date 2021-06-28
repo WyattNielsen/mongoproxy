@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/WyattNielsen/mongoproxy/convert"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 //Config describe parameters need to make a connection to a Mongo database
@@ -74,13 +74,8 @@ func (c *Config) AsConnectionString() string {
 	url += c.Hosts
 	url += "/"
 	url += c.Database
-	if c.TLS {
-		url += "?ssl=true"
-	} else {
-		url += "?ssl=false"
-	}
 	if c.OptParams != "" {
-		url += c.OptParams
+		url += "?" + c.OptParams
 	}
 
 	return url

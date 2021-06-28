@@ -3,30 +3,30 @@
 package messages
 
 import (
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // constants representing the different opcodes for the wire protocol.
 const (
-	OP_UPDATE   int32 = 2001
-	OP_INSERT         = 2002
-	OP_QUERY          = 2004
-	OP_GET_MORE       = 2005
-	OP_DELETE         = 2006
-	OP_KILL_CURSORS   = 2007
-	OP_MSG            = 2013
+	OP_UPDATE       int32 = 2001
+	OP_INSERT             = 2002
+	OP_QUERY              = 2004
+	OP_GET_MORE           = 2005
+	OP_DELETE             = 2006
+	OP_KILL_CURSORS       = 2007
+	OP_MSG                = 2013
 )
 
 // constants representing the types of request structs supported by proxy core.
 const (
-	CommandType string = "command"
-	FindType           = "find"
-	InsertType         = "insert"
-	UpdateType         = "update"
-	DeleteType         = "delete"
-	GetMoreType        = "getMore"
-	KillCursorsType    = "killCursors"
-	MsgType            = "msg"
+	CommandType     string = "command"
+	FindType               = "find"
+	InsertType             = "insert"
+	UpdateType             = "update"
+	DeleteType             = "delete"
+	GetMoreType            = "getMore"
+	KillCursorsType        = "killCursors"
+	MsgType                = "msg"
 )
 
 // a struct to represent a wire protocol message header.
@@ -63,7 +63,7 @@ func (c Command) ToBSON() bson.D {
 
 	for arg, value := range c.Args {
 		if arg != c.CommandName {
-			args = append(args, bson.DocElem{arg, value})
+			args = append(args, bson.E{arg, value})
 		}
 	}
 
@@ -123,7 +123,7 @@ func (i Insert) ToBSON() bson.D {
 	}
 
 	if i.WriteConcern != nil {
-		args = append(args, bson.DocElem{"writeConcern", *i.WriteConcern})
+		args = append(args, bson.E{"writeConcern", *i.WriteConcern})
 	}
 
 	return args
@@ -170,7 +170,7 @@ func (u Update) ToBSON() bson.D {
 	}
 
 	if u.WriteConcern != nil {
-		args = append(args, bson.DocElem{"writeConcern", *u.WriteConcern})
+		args = append(args, bson.E{"writeConcern", *u.WriteConcern})
 	}
 
 	return args
@@ -213,7 +213,7 @@ func (d Delete) ToBSON() bson.D {
 	}
 
 	if d.WriteConcern != nil {
-		args = append(args, bson.DocElem{"writeConcern", *d.WriteConcern})
+		args = append(args, bson.E{"writeConcern", *d.WriteConcern})
 	}
 
 	return args
@@ -233,7 +233,7 @@ func (g GetMore) Type() string {
 }
 
 type KillCursors struct {
-	CursorID   []int64
+	CursorID []int64
 }
 
 func (k KillCursors) Type() string {
@@ -247,7 +247,7 @@ type Section struct {
 }
 
 type Msg struct {
-	Flag    int32
+	Flag     int32
 	Sections []Section
 }
 

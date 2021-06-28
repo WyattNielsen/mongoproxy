@@ -3,11 +3,12 @@ package messages
 import (
 	"bytes"
 	"fmt"
-	"github.com/WyattNielsen/mongoproxy/buffer"
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/globalsign/mgo/bson"
 	"reflect"
 	"testing"
+
+	"github.com/WyattNielsen/mongoproxy/buffer"
+	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func shouldHaveSameContents(actual interface{}, expected ...interface{}) string {

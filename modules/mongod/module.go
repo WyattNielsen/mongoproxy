@@ -4,30 +4,26 @@
 package mongod
 
 import (
-	"crypto/tls"
-	// "fmt"
-	"net"
-	// "path"
-	// "runtime"
+	"context"
 
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/WyattNielsen/mongoproxy/bsonutil"
 	"github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/WyattNielsen/mongoproxy/messages"
 	"github.com/WyattNielsen/mongoproxy/server"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // A MongodModule takes the request, sends it to a mongod instance, and then
 // writes the response from mongod into the ResponseWriter before calling
 // the next module. It passes on requests unchanged.
 type MongodModule struct {
-	Connection   mgo.DialInfo
-	mongoSession *mgo.Session
-	ReadOnly     bool
-	Logger       *log.Logger
+	ConnectionString string
+	ReadOnly         bool
+	Logger           *log.Logger
+	Client           *mongo.Client
 }
 
 func init() {
@@ -42,50 +38,36 @@ func (m *MongodModule) Name() string {
 }
 
 func (m *MongodModule) Configure(config server.Config) error {
-	dialInfo, err := mgo.ParseURL(config.AsConnectionString())
-	dialInfo.Timeout = config.Timeout
+	m.ConnectionString = config.AsConnectionString()
 
-	if err != nil {
-		return errors.Wrap(err, "URL is unparseable")
-	}
-	// override the DialServer is we are using TLS because we don't have the proper CA certs installed.
-	if config.TLS {
-		dialInfo.DialServer = func(serverAddr *mgo.ServerAddr) (net.Conn, error) {
-			return tls.Dial("tcp", serverAddr.String(), &tls.Config{InsecureSkipVerify: true}) // TODO: Secure this connection
-		}
-	}
 	m.ReadOnly = config.ReadOnly
-	m.Connection = *dialInfo
 	m.Logger = log.New()
 	m.Logger.SetReportCaller(true)
-	/*
-		m.Logger.Formatter = &log.TextFormatter{
-			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-				filename := path.Base(f.File)
-				return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
-			},
-		}
-	*/
+
 	return nil
 }
 
 func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 	next server.PipelineFunc) {
 
+	var ctx = context.Background()
+
 	// spin up the session if it doesn't exist
-	if m.mongoSession == nil {
+	if m.Client == nil {
 		var err error
-		m.mongoSession, err = mgo.DialWithInfo(&m.Connection)
+		m.Client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(m.ConnectionString))
 		if err != nil {
 			log.Errorf("Error connecting to MongoDB: %#v", err)
 			next(req, res)
 			return
 		}
-		m.mongoSession.SetPrefetch(0)
 	}
 
-	session := m.mongoSession.Copy()
-	defer session.Close()
+	session, err := m.Client.StartSession()
+	if err != nil {
+		log.Errorf("Error starting session: %#v", err)
+	}
+	defer session.EndSession(ctx)
 
 	switch req.Type() {
 	case messages.CommandType:
@@ -120,11 +102,11 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		default:
 			m.Logger.Infof("processing %v", b)
 		}
-		err = session.DB(command.Database).Run(b, reply)
+		err = session.Client().Database(command.Database).RunCommand(ctx, b).Decode(&reply)
 
 		if err != nil {
 			// log an error if we can
-			qErr, ok := err.(*mgo.QueryError)
+			qErr, ok := err.(*mongo.CommandError)
 			m.Logger.Warnf("Error running command %v: %v", command.CommandName, err)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
@@ -156,32 +138,51 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			return
 		}
 
-		c := session.DB(f.Database).C(f.Collection)
-		query := c.Find(f.Filter).Batch(int(f.Limit)).Skip(int(f.Skip)).Prefetch(0)
+		opts := options.Find()
+		opts.SetBatchSize(int32(f.Limit))
+		opts.SetLimit(int64(f.Limit))
+		opts.SetSkip(int64(f.Skip))
 
 		if f.Projection != nil {
-			query = query.Select(f.Projection)
+			opts.SetProjection(f.Projection)
 		}
 
-		var iter = query.Iter()
+		if f.Sort != nil {
+			opts.SetSort(f.Sort)
+		}
+
+		c := session.Client().Database(f.Database).Collection(f.Collection)
+
+		var cur *mongo.Cursor
+		if cur, err = c.Find(ctx, f.Filter, opts); err != nil {
+			m.Logger.Warnf("Error on Find Command: %#v", err)
+
+			// log an error if we can
+			qErr, ok := err.(*mongo.CommandError)
+			if ok {
+				res.Error(int32(qErr.Code), qErr.Message)
+			}
+		}
+
 		var results []bson.D
 
 		if f.Limit > 0 {
 			// only store the amount specified by the limit
 			for i := 0; i < int(f.Limit); i++ {
 				var result bson.D
-				ok := iter.Next(&result)
+				ok := cur.Next(ctx)
+				cur.Decode(&result)
 				if !ok {
-					err = iter.Err()
+					err = cur.Err()
 					if err != nil {
 						m.Logger.Warnf("Error on Find Command: %#v", err)
 
 						// log an error if we can
-						qErr, ok := err.(*mgo.QueryError)
+						qErr, ok := err.(*mongo.CommandError)
 						if ok {
 							res.Error(int32(qErr.Code), qErr.Message)
 						}
-						iter.Close()
+						cur.Close(ctx)
 						next(req, res)
 						return
 					}
@@ -192,12 +193,12 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 			}
 		} else {
 			// dump all of them
-			err = iter.All(&results)
+			err = cur.All(ctx, &results)
 			if err != nil {
 				m.Logger.Warnf("Error on Find Command: %#v", err)
 
 				// log an error if we can
-				qErr, ok := err.(*mgo.QueryError)
+				qErr, ok := err.(*mongo.CommandError)
 				if ok {
 					res.Error(int32(qErr.Code), qErr.Message)
 				}
@@ -231,16 +232,24 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		b := insert.ToBSON()
 
 		reply := bson.M{}
-		err = session.DB(insert.Database).Run(b, reply)
-		if err != nil {
+		result := session.Client().Database(insert.Database).RunCommand(ctx, b)
+
+		// collection = client.Database(dbName).Collection(collectionName)
+		// if result, err = collection.InsertOne(ctx, doc); err != nil {
+		// 	t.Fatal(err)
+		// }
+
+		if result.Err() != nil {
 			// log an error if we can
-			qErr, ok := err.(*mgo.QueryError)
+			qErr, ok := err.(*mongo.WriteError)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			}
 			next(req, res)
 			return
 		}
+
+		result.Decode(&reply)
 
 		response := messages.InsertResponse{
 			// default to -1 if n doesn't exist to hide the field on export
@@ -281,16 +290,29 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		b := u.ToBSON()
 
 		reply := bson.D{}
-		err = session.DB(u.Database).Run(b, &reply)
-		if err != nil {
+		result := session.Client().Database(u.Database).RunCommand(ctx, b)
+
+		// var update bson.M
+		// json.Unmarshal([]byte(`{ "$set": {"year": 1998}}`), &update)
+		// if result, err = collection.UpdateOne(ctx, bson.M{"_id": doc["_id"]}, update); err != nil {
+		// 	t.Fatal(err)
+		// }
+
+		// if result, err = collection.UpdateMany(ctx, bson.M{"hometown": "Atlanta"}, update); err != nil {
+		// 	t.Fatal(err)
+		// }
+
+		if result.Err() != nil {
 			// log an error if we can
-			qErr, ok := err.(*mgo.QueryError)
+			qErr, ok := err.(*mongo.WriteError)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			}
 			next(req, res)
 			return
 		}
+
+		result.Decode(&reply)
 
 		response := messages.UpdateResponse{
 			N:         convert.ToInt32(bsonutil.FindValueByKey("n", reply), -1),
@@ -340,16 +362,23 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		b := d.ToBSON()
 
 		reply := bson.M{}
-		err = session.DB(d.Database).Run(b, reply)
-		if err != nil {
+		result := session.Client().Database(d.Database).RunCommand(ctx, b)
+
+		// if result, err = collection.DeleteMany(ctx, bson.M{"hometown": "Atlanta"}); err != nil {
+		// 	t.Fatal(err)
+		// }
+
+		if result.Err() != nil {
 			// log an error if we can
-			qErr, ok := err.(*mgo.QueryError)
+			qErr, ok := err.(*mongo.WriteError)
 			if ok {
 				res.Error(int32(qErr.Code), qErr.Message)
 			}
 			next(req, res)
 			return
 		}
+
+		result.Decode(&reply)
 
 		response := messages.DeleteResponse{
 			N: convert.ToInt32(reply["n"], -1),
@@ -381,22 +410,32 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 		m.Logger.Debugf("%#v", g)
 
 		// make an iterable to get more
-		c := session.DB(g.Database).C(g.Collection)
-		batch := make([]bson.Raw, 0)
-		iter := c.NewIter(session, batch, g.CursorID, nil)
-		//iter.SetBatch(int(g.BatchSize))
+		// https://docs.mongodb.com/manual/reference/command/getMore/
+		d := session.Client().Database(g.Database)
+		cur, err := d.RunCommandCursor(ctx, g)
+		defer cur.Close(ctx)
+
+		if err != nil {
+			// log an error if we can
+			qErr, ok := err.(*mongo.CommandError)
+			if ok {
+				res.Error(int32(qErr.Code), qErr.Message)
+			}
+			next(req, res)
+			return
+		}
 
 		var results []bson.D
 
 		for i := 0; i < int(g.BatchSize); i++ {
 			var result bson.D
-			ok := iter.Next(&result)
+			ok := cur.Next(ctx)
 			if !ok {
-				err = iter.Err()
+				err = cur.Err()
 				if err != nil {
 					m.Logger.Warnf("Error on GetMore Command: %#v", err)
 
-					if err == mgo.ErrCursor {
+					if err == mongo.ErrNilCursor {
 						// we return an empty getMore with an errored out
 						// cursor
 						response := messages.GetMoreResponse{
@@ -411,16 +450,17 @@ func (m *MongodModule) Process(req messages.Requester, res messages.Responder,
 					}
 
 					// log an error if we can
-					qErr, ok := err.(*mgo.QueryError)
+					qErr, ok := err.(*mongo.CommandError)
 					if ok {
 						res.Error(int32(qErr.Code), qErr.Message)
 					}
-					iter.Close()
+					cur.Close(ctx)
 					next(req, res)
 					return
 				}
 				break
 			}
+			cur.Decode(&result)
 			results = append(results, result)
 		}
 

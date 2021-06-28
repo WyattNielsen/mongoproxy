@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type ConfigLocation struct {

@@ -11,9 +11,9 @@ import (
 
 	"testing"
 
-	"github.com/globalsign/mgo/bson"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/WyattNielsen/mongoproxy/mock"
+	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var mockQuery = bson.D{{"hello", 1}}

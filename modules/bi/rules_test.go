@@ -6,8 +6,8 @@ import (
 
 	"github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/WyattNielsen/mongoproxy/messages"
-	"github.com/globalsign/mgo/bson"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestCreateSelector(t *testing.T) {

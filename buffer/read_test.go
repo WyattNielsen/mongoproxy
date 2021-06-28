@@ -2,10 +2,11 @@ package buffer
 
 import (
 	"encoding/binary"
+	"testing"
+
 	"github.com/WyattNielsen/mongoproxy/mock"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/globalsign/mgo/bson"
-	"testing"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestReadDocument(t *testing.T) {

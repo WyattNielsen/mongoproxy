@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/globalsign/mgo/bson"
-	log "github.com/sirupsen/logrus"
 	"github.com/WyattNielsen/mongoproxy/buffer"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func marshalReplyDocs(reply interface{}, docs []bson.D) ([]byte, error) {

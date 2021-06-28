@@ -3,8 +3,8 @@ package bsonutil
 import (
 	"testing"
 
-	"github.com/globalsign/mgo/bson"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestFindByValueD(t *testing.T) {

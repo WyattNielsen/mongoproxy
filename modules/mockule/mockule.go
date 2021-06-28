@@ -8,7 +8,7 @@ import (
 
 	"github.com/WyattNielsen/mongoproxy/messages"
 	"github.com/WyattNielsen/mongoproxy/server"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var maxWireVersion = 3

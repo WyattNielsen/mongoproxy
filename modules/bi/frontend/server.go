@@ -6,7 +6,7 @@ import (
 
 	"github.com/WyattNielsen/mongoproxy/modules/bi/frontend/controllers"
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // the funcMap adds helper functions that can be injected into the HTML

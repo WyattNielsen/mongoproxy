@@ -5,9 +5,10 @@ package buffer
 import (
 	"encoding/binary"
 	"fmt"
-	. "github.com/WyattNielsen/mongoproxy/convert"
-	"github.com/globalsign/mgo/bson"
 	"io"
+
+	. "github.com/WyattNielsen/mongoproxy/convert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // ReadDocument reads a BSON ordered document from a reader, and returns the

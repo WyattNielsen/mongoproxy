@@ -5,7 +5,7 @@ import (
 
 	"github.com/WyattNielsen/mongoproxy/modules/bi"
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // getDataOverRange is a helper function that queries the MongoDB database for

@@ -8,7 +8,7 @@ import (
 	"github.com/WyattNielsen/mongoproxy/bsonutil"
 	"github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/WyattNielsen/mongoproxy/messages"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Constants for the time granularities.

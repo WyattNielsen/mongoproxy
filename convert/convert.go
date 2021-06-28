@@ -3,8 +3,9 @@ package convert
 
 import (
 	"fmt"
-	"github.com/globalsign/mgo/bson"
 	"strconv"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // ConvertToInt32LE converts the first four bytes of a slice to a 32-bit little endian integer.
