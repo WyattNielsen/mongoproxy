@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/WyattNielsen/mongoproxy/modules/bi"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // getDataOverRange is a helper function that queries the MongoDB database for

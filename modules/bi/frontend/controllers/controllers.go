@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/WyattNielsen/mongoproxy/bsonutil"
 	"github.com/WyattNielsen/mongoproxy/convert"
-	. "github.com/WyattNielsen/mongoproxy/log"
 	"github.com/WyattNielsen/mongoproxy/modules/bi"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // biModule is an instance of a BI Module used as reference for the frontend.

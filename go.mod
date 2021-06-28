@@ -1,4 +1,4 @@
-module github.com/tidepool-org/mongoproxy
+module github.com/WyattNielsen/mongoproxy
 
 go 1.13
 

@@ -5,10 +5,9 @@ import (
 	"time"
 
 	"github.com/WyattNielsen/mongoproxy/convert"
-	. "github.com/WyattNielsen/mongoproxy/log"
 	"github.com/WyattNielsen/mongoproxy/messages"
+	"github.com/globalsign/mgo/bson"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func TestCreateSelector(t *testing.T) {

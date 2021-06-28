@@ -6,10 +6,9 @@ import (
 	"math/rand"
 	"strconv"
 
-	. "github.com/WyattNielsen/mongoproxy/log"
 	"github.com/WyattNielsen/mongoproxy/messages"
 	"github.com/WyattNielsen/mongoproxy/server"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 )
 
 var maxWireVersion = 3

@@ -11,8 +11,8 @@ import (
 	. "github.com/WyattNielsen/mongoproxy/log"
 	"github.com/WyattNielsen/mongoproxy/messages"
 	"github.com/WyattNielsen/mongoproxy/server"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // BIModule calls the next module immediately, and then collects and aggregates
