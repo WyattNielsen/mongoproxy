@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/tidepool-org/mongoproxy/modules/mongod"
-	"github.com/tidepool-org/mongoproxy/proxy"
-	"github.com/tidepool-org/mongoproxy/server"
+	"github.com/WyattNielsen/mongoproxy/modules/mongod"
+	"github.com/WyattNielsen/mongoproxy/proxy"
+	"github.com/WyattNielsen/mongoproxy/server"
 )
 
 func main() {

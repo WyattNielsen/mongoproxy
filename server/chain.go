@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/messages"
 )
 
 // PipelineFunc is the function type for the built pipeline, and is called

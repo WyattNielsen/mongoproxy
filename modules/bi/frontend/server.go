@@ -5,7 +5,7 @@ import (
 	"html/template"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mongodb-labs/mongoproxy/modules/bi/frontend/controllers"
+	"github.com/WyattNielsen/mongoproxy/modules/bi/frontend/controllers"
 	"gopkg.in/mgo.v2/bson"
 )
 

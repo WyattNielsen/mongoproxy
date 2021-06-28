@@ -3,8 +3,8 @@ package messages
 import (
 	"bytes"
 	"fmt"
-	"github.com/tidepool-org/mongoproxy/buffer"
-	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/WyattNielsen/mongoproxy/buffer"
+	"github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/globalsign/mgo/bson"
 )
 

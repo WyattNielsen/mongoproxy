@@ -7,13 +7,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/tidepool-org/mongoproxy/buffer"
+	"github.com/WyattNielsen/mongoproxy/buffer"
 
 	"testing"
 
 	"github.com/globalsign/mgo/bson"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/tidepool-org/mongoproxy/mock"
+	"github.com/WyattNielsen/mongoproxy/mock"
 )
 
 var mockQuery = bson.D{{"hello", 1}}

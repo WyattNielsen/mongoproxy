@@ -1,7 +1,7 @@
 package bi
 
 import (
-	"github.com/mongodb-labs/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/messages"
 	"gopkg.in/mgo.v2/bson"
 )
 

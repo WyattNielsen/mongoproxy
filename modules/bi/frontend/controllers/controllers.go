@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mongodb-labs/mongoproxy/bsonutil"
-	"github.com/mongodb-labs/mongoproxy/convert"
-	. "github.com/mongodb-labs/mongoproxy/log"
-	"github.com/mongodb-labs/mongoproxy/modules/bi"
+	"github.com/WyattNielsen/mongoproxy/bsonutil"
+	"github.com/WyattNielsen/mongoproxy/convert"
+	. "github.com/WyattNielsen/mongoproxy/log"
+	"github.com/WyattNielsen/mongoproxy/modules/bi"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

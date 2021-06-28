@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mongodb-labs/mongoproxy/convert"
-	. "github.com/mongodb-labs/mongoproxy/log"
-	"github.com/mongodb-labs/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/convert"
+	. "github.com/WyattNielsen/mongoproxy/log"
+	"github.com/WyattNielsen/mongoproxy/messages"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 )

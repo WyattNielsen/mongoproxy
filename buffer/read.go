@@ -5,7 +5,7 @@ package buffer
 import (
 	"encoding/binary"
 	"fmt"
-	. "github.com/tidepool-org/mongoproxy/convert"
+	. "github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/globalsign/mgo/bson"
 	"io"
 )

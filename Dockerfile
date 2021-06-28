@@ -1,8 +1,8 @@
 # Development
 FROM golang:1.13.8-alpine AS development
-WORKDIR /go/src/github.com/tidepool-org/mongoproxy
+WORKDIR /go/src/github.com/WyatNielsen/mongoproxy
 RUN adduser -D tidepool && \
-    chown -R tidepool /go/src/github.com/tidepool-org/mongoproxy
+    chown -R tidepool /go/src/github.com/WyattNielsen/mongoproxy
 USER tidepool
 ENV GO111MODULE=on
 COPY --chown=tidepool . .
@@ -17,5 +17,5 @@ RUN apk --no-cache update && \
     apk add --no-cache ca-certificates && \
     adduser -D tidepool
 USER tidepool
-COPY --from=development --chown=tidepool /go/src/github.com/tidepool-org/mongoproxy/mongoproxy .
+COPY --from=development --chown=tidepool /go/src/github.com/WyattNielsen/mongoproxy/mongoproxy .
 CMD ["./mongoproxy"]

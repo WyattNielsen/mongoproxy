@@ -3,7 +3,7 @@ package controllers
 import (
 	"time"
 
-	"github.com/mongodb-labs/mongoproxy/modules/bi"
+	"github.com/WyattNielsen/mongoproxy/modules/bi"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

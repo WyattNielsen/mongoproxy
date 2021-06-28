@@ -6,8 +6,8 @@ import (
 	"net"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/tidepool-org/mongoproxy/messages"
-	"github.com/tidepool-org/mongoproxy/server"
+	"github.com/WyattNielsen/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/server"
 )
 
 // Start starts the server at the provided port and with the given module chain.

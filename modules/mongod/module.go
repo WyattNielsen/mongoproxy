@@ -14,10 +14,10 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidepool-org/mongoproxy/bsonutil"
-	"github.com/tidepool-org/mongoproxy/convert"
-	"github.com/tidepool-org/mongoproxy/messages"
-	"github.com/tidepool-org/mongoproxy/server"
+	"github.com/WyattNielsen/mongoproxy/bsonutil"
+	"github.com/WyattNielsen/mongoproxy/convert"
+	"github.com/WyattNielsen/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/server"
 )
 
 // A MongodModule takes the request, sends it to a mongod instance, and then

@@ -7,7 +7,7 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidepool-org/mongoproxy/buffer"
+	"github.com/WyattNielsen/mongoproxy/buffer"
 )
 
 func marshalReplyDocs(reply interface{}, docs []bson.D) ([]byte, error) {

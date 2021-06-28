@@ -3,7 +3,7 @@
 package server
 
 import (
-	"github.com/tidepool-org/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/messages"
 )
 
 type Module interface {

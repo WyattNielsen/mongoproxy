@@ -3,7 +3,7 @@ package messages
 import (
 	"bytes"
 	"fmt"
-	"github.com/tidepool-org/mongoproxy/buffer"
+	"github.com/WyattNielsen/mongoproxy/buffer"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/globalsign/mgo/bson"
 	"reflect"

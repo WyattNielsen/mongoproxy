@@ -2,7 +2,7 @@ package buffer
 
 import (
 	"encoding/binary"
-	"github.com/tidepool-org/mongoproxy/mock"
+	"github.com/WyattNielsen/mongoproxy/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/globalsign/mgo/bson"
 	"testing"

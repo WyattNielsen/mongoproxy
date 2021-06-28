@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"strconv"
 
-	. "github.com/mongodb-labs/mongoproxy/log"
-	"github.com/mongodb-labs/mongoproxy/messages"
-	"github.com/mongodb-labs/mongoproxy/server"
+	. "github.com/WyattNielsen/mongoproxy/log"
+	"github.com/WyattNielsen/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/server"
 	"gopkg.in/mgo.v2/bson"
 )
 

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mongodb-labs/mongoproxy/bsonutil"
-	"github.com/mongodb-labs/mongoproxy/convert"
-	"github.com/mongodb-labs/mongoproxy/messages"
+	"github.com/WyattNielsen/mongoproxy/bsonutil"
+	"github.com/WyattNielsen/mongoproxy/convert"
+	"github.com/WyattNielsen/mongoproxy/messages"
 	"gopkg.in/mgo.v2/bson"
 )
 

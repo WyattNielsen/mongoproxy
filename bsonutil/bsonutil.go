@@ -2,7 +2,7 @@
 package bsonutil
 
 import (
-	"github.com/tidepool-org/mongoproxy/convert"
+	"github.com/WyattNielsen/mongoproxy/convert"
 	"github.com/globalsign/mgo/bson"
 	"strings"
 )

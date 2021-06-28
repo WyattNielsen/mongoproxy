@@ -8,7 +8,7 @@ go:
 env:
   - GO111MODULE=on
 
-go_import_path: github.com/tidepool-org/mongoproxy
+go_import_path: github.com/WyattNielsen/mongoproxy
 
 script:
   - go build -o mongoproxy mongoproxy.go
